@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificado Ethereum</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+</head>
+
+<body>
+    <h1>Emissão e Verificação de Certificado</h1>
+
+    <h2>Emissão de Certificado</h2>
+    <form id="issueForm">
+        <label for="participantAddress">Endereço do Participante:</label>
+        <input type="text" id="participantAddress" name="participantAddress" required><br><br>
+        <label for="eventName">Nome do Evento:</label>
+        <input type="text" id="eventName" name="eventName" required><br><br>
+        <label for="hours">Horas Complementares:</label>
+        <input type="number" id="hours" name="hours" required><br><br>
+        <label for="participantName">Nome do Participante:</label>
+        <input type="text" id="participantName" name="participantName" required><br><br>
+        <button type="submit">Emitir Certificado</button>
+    </form>
+
+    <h2>Validação de Certificado</h2>
+    <form id="validateForm">
+        <label for="validateAddress">Endereço do Participante:</label>
+        <input type="text" id="validateAddress" name="validateAddress" required><br><br>
+        <button type="submit">Validar Certificado</button>
+    </form>
+
+    <h2>Detalhes do Certificado</h2>
+    <div id="certificateDetails"></div>
+
+    <script>
+        const contractAddress = '0xC05A70b910e5ac230d9699C920d9d3dA05B4cF2d';
+        const contractABI = [
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": true,
+                        "internalType": "address",
+                        "name": "participant",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "string",
+                        "name": "nomeEvento",
+                        "type": "string"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "horasComplementares",
+                        "type": "uint256"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "string",
+                        "name": "nomeParticipante",
+                        "type": "string"
+                    }
+                ],
+                "name": "CertificateIssued",
+                "type": "event"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "name": "certificates",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "nomeEvento",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "horasComplementares",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "nomeParticipante",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "exists",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function",
+                "constant": true
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_participant",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "_nomeEvento",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_horasComplementares",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "_nomeParticipante",
+                        "type": "string"
+                    }
+                ],
+                "name": "gerarCertificado",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_participant",
+                        "type": "address"
+                    }
+                ],
+                "name": "validarCertificado",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function",
+                "constant": true
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_participant",
+                        "type": "address"
+                    }
+                ],
+                "name": "getCertificado",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function",
+                "constant": true
+            }
+        ];
+
+        const provider = new Web3.providers.HttpProvider('http://localhost:8545');
+        const web3 = new Web3(provider);
+
+        // Cria uma instância do contrato
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+        // Função para emitir um certificado
+        document.getElementById('issueForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const participantAddress = document.getElementById('participantAddress').value.trim();
+            const eventName = document.getElementById('eventName').value.trim();
+            const hours = document.getElementById('hours').value;
+            const participantName = document.getElementById('participantName').value.trim();
+
+            try {
+                // Verificar se o endereço Ethereum é válido
+                if (!web3.utils.isAddress(participantAddress)) {
+                    throw new Error('Endereço Ethereum inválido');
+                }
+
+                // Obter contas disponíveis e definir a primeira como remetente
+                const accounts = await web3.eth.getAccounts();
+                const senderAddress = accounts[0];
+
+                // Enviar a transação para o contrato com o endereço remetente definido
+                await contract.methods.gerarCertificado(participantAddress, eventName, hours, participantName);
+                alert('Certificado emitido com sucesso!');
+            } catch (error) {
+                console.error('Erro ao emitir certificado:', error);
+                alert('Erro ao emitir certificado:', error.message);
+            }
+        });
+
+        document.getElementById('validateForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const validateAddress = document.getElementById('validateAddress').value;
+
+            try {
+                const exists = await contract.methods.validarCertificado(validateAddress).call();
+                if (exists) {
+                    const certificate = await contract.methods.getCertificado(validateAddress).call();
+                    document.getElementById('certificateDetails').innerHTML = `
+                        <p><strong>Nome do Evento:</strong> ${certificate.nomeEvento}</p>
+                        <p><strong>Horas Complementares:</strong> ${certificate.horasComplementares}</p>
+                        <p><strong>Nome do Participante:</strong> ${certificate.nomeParticipante}</p>
+                        <p><strong>Existe:</strong> ${certificate.exists}</p>
+                    `;
+                } else {
+                    document.getElementById('certificateDetails').innerHTML = '<p>Certificado não encontrado para o endereço especificado.</p>';
+                }
+            } catch (error) {
+                console.error('Erro ao validar certificado:', error);
+                alert('Erro ao validar certificado:', error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
