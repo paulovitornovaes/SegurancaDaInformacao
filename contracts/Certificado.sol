@@ -10,7 +10,7 @@ contract CertificadoContract {
 
     mapping(address => Certificado[]) public certificados;
 
-    event CertificateIssued(address indexed participant, string nomeEvento, string horasComplementares, string nomeParticipante);
+    event CertificadoEmitido(address indexed participant, string nomeEvento, string horasComplementares, string nomeParticipante);
 
     function gerarCertificado(address _participant, string memory _nomeEvento, string memory _horasComplementares, string memory _nomeParticipante) public {
         certificados[_participant].push(Certificado({
@@ -19,7 +19,7 @@ contract CertificadoContract {
             nomeParticipante: _nomeParticipante
         }));
 
-        emit CertificateIssued(_participant, _nomeEvento, _horasComplementares, _nomeParticipante);
+        emit CertificadoEmitido(_participant, _nomeEvento, _horasComplementares, _nomeParticipante);
     }
 
     function getCertificado(address _participant, uint index) public view returns (string memory, string memory, string memory) {
@@ -28,7 +28,7 @@ contract CertificadoContract {
         return (cert.nomeEvento, cert.horasComplementares, cert.nomeParticipante);
     }
 
-    function getNumberOfCertificados(address _participant) public view returns (uint) {
+    function getNumberOfertificados(address _participant) public view returns (uint) {
         return certificados[_participant].length;
     }
 }

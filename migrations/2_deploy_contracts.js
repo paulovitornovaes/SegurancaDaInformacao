@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-const CertificateContract = artifacts.require("CertificateContract");
+const CertificadoContract = artifacts.require("CertificadoContract");
 
 module.exports = function(deployer) {
-  deployer.deploy(CertificateContract);
+  deployer.deploy(CertificadoContract);
 };
